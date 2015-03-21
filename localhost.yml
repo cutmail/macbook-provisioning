@@ -1,0 +1,135 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  sudo: no
+  vars:
+    homebrew_taps:
+      - homebrew/binary
+      - homebrew/dupes
+      - caskroom/cask
+      - sanemat/font
+    homebrew_packages:
+      - { name: readline }
+      - { name: ack }
+      - { name: autoconf }
+      - { name: automake }
+      - { name: cmake }
+      - { name: coreutils }
+      - { name: cscope }
+      - { name: erlang }
+      - { name: findutils }
+      - { name: freetype }
+      - { name: gdbm }
+      - { name: git }
+      - { name: git-flow }
+      - { name: gmp }
+      - { name: gnu-sed }
+      - { name: gnu-tar }
+      - { name: go }
+      - { name: hub }
+      - { name: icu4c }
+      - { name: imagemagick }
+      - { name: jpeg }
+      - { name: jq }
+      - { name: libevent }
+      - { name: libpng }
+      - { name: libtiff }
+      - { name: libtool }
+      - { name: libxml2 }
+      - { name: little-cms2 }
+      - { name: macvim }
+      - { name: makedepend }
+      - { name: mercurial }
+      - { name: mysql }
+      - { name: nginx }
+      - { name: nkf }
+      - { name: node }
+      - { name: nspr }
+      - { name: openssl }
+      - { name: ossp-uuid }
+      - { name: pcre }
+      - { name: pidof }
+      - { name: pkg-config }
+      - { name: postgresql }
+      - { name: python }
+      - { name: readline }
+      - { name: reattach-to-user-namespace }
+      - { name: redis }
+      - { name: spidermonkey }
+      - { name: sqlite }
+      - { name: tig }
+      - { name: tmux }
+      - { name: tree }
+      - { name: unixodbc }
+      - { name: v8 }
+      - { name: vim }
+      - { name: wget }
+      - { name: wxmac }
+      - { name: xz }
+      - { name: zsh }
+      - { name: ruby-build }
+      - { name: rbenv }
+      - { name: xctool }
+      - { name: chisel }
+      - { name: gibo }
+      - { name: brew-cask }
+      - { name: postgresql }
+      - { name: peco }
+      - { name: ansible }
+        #      - { name: curl-ca-bundle }
+      - { name: cloc }
+    homebrew_cask_packages:
+      - { name: appcleaner } 
+      - { name: bathyscaphe } 
+      - { name: slack } 
+      - { name: macdown } 
+      - { name: macvim } 
+
+  tasks:
+    - name: hombrew の tap リポジトリを追加
+      homebrew_tap: tap={{ item }} state=present
+      with_items: homebrew_taps
+
+    - name: homebrew をアップデート
+      homebrew: update_homebrew=yes
+
+    # brew
+    - name: brew パッケージをインストール
+      homebrew: name={{ item.name }} state={{ item.state|default('latest') }} install_options={{ item.install_options|default() }}
+      with_items: homebrew_packages
+      register: brew_result
+    - name: brew パッケージの情報保存先ディレクトリを作成
+      file: path=brew_info state=directory
+    - name: brew パッケージの情報を保存
+      shell: brew info {{ item }} > brew_info/{{ item }}
+      with_items: brew_result.results | selectattr('changed') | map(attribute='item') | map(attribute='name') | list
+
+    # cask
+    - name: homebrew-cask のインストール
+      homebrew: name=brew-cask state=latest
+    - name: cask パッケージをインストール
+      homebrew_cask: name={{ item.name }} state={{ item.state|default('installed') }}
+      with_items: homebrew_cask_packages
+      register: cask_result
+    - name: cask パッケージの情報保存先ディレクトリを作成
+      file: path=cask_info state=directory
+    - name: cask パッケージの情報を保存
+      shell: brew cask info {{ item }} > cask_info/{{ item }}
+      with_items: cask_result.results | selectattr('changed') | map(attribute='item') | map(attribute='name') | list
+
+    # Ricty
+    - name: xquartz のインストール (for Ricty)
+      homebrew_cask: name=xquartz
+    - name: fontforge のインストール (for Ricty)
+      homebrew: name=fontforge
+    - name: Ricty のインストール
+      homebrew: name=ricty
+    - name: 生成されたフォントファイルをコピー
+      shell: cp -f $(brew --cellar ricty)/*/share/fonts/Ricty*.ttf ~/Library/Fonts/
+      args:
+        creates: ~/Library/Fonts/Ricty-Bold.ttf
+      notify: run fc-cache
+
+  handlers:
+    - name: run fc-cache
+      shell: fc-cache -vf
