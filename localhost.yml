@@ -79,13 +79,13 @@
         #      - { name: curl-ca-bundle }
       - { name: cloc }
     homebrew_cask_packages:
-      - { name: appcleaner } 
-      - { name: bathyscaphe } 
-      - { name: slack } 
-      - { name: macdown } 
-      - { name: macvim } 
-      - { name: vagrant } 
-      - { name: virtualbox } 
+      - appcleaner
+      - bathyscaphe
+      - slack
+      - macdown
+      - macvim
+      - vagrant
+      - virtualbox
 
   tasks:
     - name: hombrew の tap リポジトリを追加
@@ -110,7 +110,7 @@
     - name: homebrew-cask のインストール
       homebrew: name=brew-cask state=latest
     - name: cask パッケージをインストール
-      homebrew_cask: name={{ item.name }} state={{ item.state|default('installed') }}
+      homebrew_cask: name={{ item }} state={{ item.state|default('installed') }}
       with_items: homebrew_cask_packages
       register: cask_result
     - name: cask パッケージの情報保存先ディレクトリを作成
