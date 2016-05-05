@@ -73,7 +73,6 @@
       - { name: xctool }
       - { name: chisel }
       - { name: gibo }
-      - { name: brew-cask }
       - { name: postgresql }
       - { name: peco }
       - { name: ansible }
