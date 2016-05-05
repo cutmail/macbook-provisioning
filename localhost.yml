@@ -84,6 +84,8 @@
       - { name: slack } 
       - { name: macdown } 
       - { name: macvim } 
+      - { name: vagrant } 
+      - { name: virtualbox } 
 
   tasks:
     - name: hombrew の tap リポジトリを追加
